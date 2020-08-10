@@ -1,0 +1,201 @@
+import React, { Component } from "react";
+import ReactDOM from "react-dom";
+import {
+  Table,
+  Input,
+  InputGroup,
+  InputGroupAddon,
+  InputGroupText,
+} from "reactstrap";
+import Select from "react-select";
+import "./styles.css";
+
+class TableList extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      showFilter: false,
+    };
+  }
+
+  renderHeaders() {
+    let tds = [];
+    for (let i = 0; i < this.props.columns.length; i++) {
+      let column = this.props.columns[i];
+      let className = null;
+      if (i === 0) className = "first";
+      if (i === this.props.columns.length - 1) className = "last";
+      tds.push(<td className={className}>{column.label.toUpperCase()}</td>);
+    }
+
+    return tds;
+  }
+
+  getRowValueRenderMethod() {
+    let renderMap = {};
+
+    for (let i = 0; i < this.props.columns.length; i++) {
+      let column = this.props.columns[i];
+      if (column.render) renderMap[column.key] = column.render;
+    }
+
+    return renderMap;
+  }
+
+  getRow(rowMap, renderMap) {
+    let tds = [];
+    for (let i = 0; i < this.props.columns.length; i++) {
+      let key = this.props.columns[i].key;
+      let className = null;
+      if (i === 0) className = "first primary";
+      if (i === this.props.columns.length - 1) className = "last";
+
+      // use custom render method given for column if exist, else use the value.
+      let value = renderMap[key] ? renderMap[key](rowMap) : rowMap[key];
+      tds.push(<td className={className}>{value}</td>);
+    }
+
+    return tds;
+  }
+
+  renderRows() {
+    let trs = [];
+    let renderMethodMap = this.getRowValueRenderMethod();
+    for (let i = 0; i < this.props.data.length; i++) {
+      let rowMap = this.props.data[i];
+      trs.push(<tr>{this.getRow(rowMap, renderMethodMap)}</tr>);
+    }
+
+    return trs;
+  }
+
+  toggleFilter = () => {
+    this.setState({ showFilter: !this.state.showFilter });
+  };
+
+  getListContainerClassNames() {
+    return !this.state.showFilter ? "mapp-container" : "mapp-container left-75";
+  }
+
+  render() {
+    return (
+      <div style={{ height: "100%" }}>
+        <div className={this.getListContainerClassNames()}>
+          <div style={{ padding: "15px 0 10px 0", margin: "0 20px" }}>
+            <div style={{ display: "inline-block", width: "70%" }}>
+              <InputGroup className="mapp-search">
+                <InputGroupAddon addonType="prepend">
+                  <InputGroupText>
+                    <i className="fa fa-search"> </i>
+                  </InputGroupText>
+                </InputGroupAddon>
+                <Input placeholder="Search by conversation title, company, type." />
+              </InputGroup>
+            </div>
+            <div style={{ display: "inline-block", float: "right" }}>
+              {this.props.newButton}
+
+              <button
+                onClick={this.toggleFilter}
+                className="mapp-button-outline small with-icon"
+              >
+                <i className="fa fa-filter"> </i>
+                <span>Filter</span>
+              </button>
+            </div>
+          </div>
+          <div className="mapp-table-container">
+            <Table className="mapp-table">
+              <thead>
+                <tr>{this.renderHeaders()}</tr>
+              </thead>
+              <tbody>{this.renderRows()}</tbody>
+            </Table>
+          </div>
+        </div>
+        <div
+          className="mapp-container right-25 right-container"
+          hidden={!this.state.showFilter}
+        >
+          <div>FILTERS</div>
+
+          <div className="mapp-filter-input-group">
+            <div className="mapp-filter-label">Company</div>
+            <Select
+              placeholder="Company"
+              value="All"
+              defaultInputValue="All"
+              // onChange={() => ()}
+            />
+          </div>
+          <div className="mapp-filter-input-group">
+            <div className="mapp-filter-label">Type</div>
+            <Input value="All" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+class NewTableList extends Component {
+  constructor(props) {
+    super(props);
+    // this.props.srcData
+    this.state = {
+      rows: [],
+      start: 0,
+			amount: 5
+    };
+  }
+
+  handleAddRow = () => {
+    this.setState((prevState, props) => {
+      if (this.state.start < this.props.sourceData.length) {
+        return {
+					rows: [...prevState.rows, ...this.props.sourceData.slice(this.state.start, this.state.start + this.state.amount)],
+          start: this.state.start + this.state.amount
+        };
+      }
+    });
+  };
+
+  render() {
+    return (
+      <div>
+        <TableList
+          columns={[
+            { label: "Id", key: "id" },
+            { label: "Name", key: "name" },
+            { label: "Salary", key: "salary" },
+            { label: "Company", key: "company" },
+          ]}
+          data={this.state.rows}
+        />
+        <button onClick={this.handleAddRow}>Click</button>
+      </div>
+    );
+  }
+}
+
+const sourceData = [
+  { id: 1, name: "Tarantino", salary: "17000", company: "Miramax" },
+  { id: 2, name: "Nolan", salary: "20000", company: "Warner Bros" },
+  { id: 3, name: "Speilberg", salary: "80000", company: "Dreamworks" },
+  { id: 4, name: "Sergio Leone", salary: "30000", company: "Dollars" },
+  { id: 5, name: "Edgar Wright", salary: "100000", company: "Columbia" },
+  { id: 6, name: "Johah", salary: "17000", company: "Miramax" },
+  { id: 7, name: "Jonathan", salary: "20000", company: "Warner Bros" },
+  { id: 8, name: "Carpenter", salary: "80000", company: "Dreamworks" },
+  { id: 9, name: "Steve", salary: "30000", company: "Dollars" },
+  { id: 10, name: "Smith", salary: "100000", company: "Columbia" },
+];
+
+const rootElement = document.getElementById("root");
+ReactDOM.render(
+  <React.StrictMode>
+    <NewTableList sourceData={sourceData} />
+  </React.StrictMode>,
+  rootElement
+);
